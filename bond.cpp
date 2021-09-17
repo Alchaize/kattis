@@ -4,77 +4,195 @@
 #include <sstream>
 #include <cmath>
 
+// Currently fails test 8/32
+#define MODE    1
+
 using namespace std;
 
-int CalculateHighestProduct(int **bonds, int bondIndex, int bondCount, int *takenMissions);
+double CalculateHighestProduct(double **bonds, int bondIndex, int *takenMissions);
 bool CheckIfTaken(int index, int *taken, int maxTakenMissions);
+
+bool TestOne();
+bool TestTwo();
+bool TestThree();
+
+int bondCount;
 
 int main()
 {
   string input;
   string hold;
 
-  getline(cin, input);
-
-  int numberOfBonds = stoi(input);
-
-  // Store probabilities in a 2d-array
-  int **probabilities = (int **)calloc(numberOfBonds, sizeof(int *));
-  int   j = 0;
-  stringstream ss;
-
-  for (int i = 0; i < numberOfBonds; i++)
+  if (MODE == 0)
   {
-    probabilities[i] = (int *)calloc(numberOfBonds, sizeof(int));
-
-    // Input
     getline(cin, input);
-    ss.clear();
-    ss.str(input);
+    bondCount = stoi(input);
 
-    // Convert input to integers
-    while (getline(ss, hold, ' '))
+    // Store probabilities in a 2d-array
+    double **probabilities = (double **)calloc(bondCount, sizeof(double *));
+    int j = 0;
+    stringstream ss;
+
+    for (int i = 0; i < bondCount; i++)
     {
-      probabilities[i][j] = stoi(hold);
-      j++;
+      probabilities[i] = (double *)calloc(bondCount, sizeof(double));
+
+      // Input
+      getline(cin, input);
+      ss.clear();
+      ss.str(input);
+
+      // Convert input to double
+      while (getline(ss, hold, ' '))
+      {
+        probabilities[i][j] = (double)stoi(hold);
+        j++;
+      }
+      j = 0;
     }
-    j = 0;
+
+
+    // Calculate highest product, brute force
+    double product = 0;
+    int *  takenMissions = (int *)calloc(bondCount, sizeof(int));
+    product = CalculateHighestProduct(probabilities, 0, takenMissions);
+
+    // Print result
+    cout << product << endl;
+
+    // Free allocated memory
+    for (int i = 0; i < bondCount; i++)
+    {
+      free(probabilities[i]);
+    }
+    free(probabilities);
+    free(takenMissions);
   }
-
-
-  // Calculate highest product, brute force
-  double product = 0;
-  int *  takenMissions = (int *)calloc(numberOfBonds, sizeof(int));
-
-  product = CalculateHighestProduct(probabilities, 0, numberOfBonds, takenMissions);
-
-  // Convert to percentage
-  product = product / pow(100, numberOfBonds - 1);
-  cout << product << endl;
-
-  // Free allocated memory
-  for (int i = 0; i < numberOfBonds; i++)
+  else
   {
-    free(probabilities[i]);
+    cout << "Starting tests..." << endl;
+    bondCount = 20;
+    if (TestOne())
+    {
+      cout << "Passed first test\n\n" << endl;
+    }
+    bondCount = 3;
+    if (TestTwo())
+    {
+      cout << "Passed second test\n\n" << endl;
+    }
+    if (TestThree())
+    {
+      cout << "Passed third test" << endl;
+    }
+    cout << "Tests finished." << endl;
   }
-  free(probabilities);
-  free(takenMissions);
+
 
   return(0);
 }
 
-int CalculateHighestProduct(int **bonds, int bondIndex, int bondCount, int *takenMissions)
+bool TestOne()
 {
-  int product = 0, max = 0;
+  int k = 19;
+  double **bonds = (double **)calloc(20, sizeof(double *));
+  int *    takenMissions = (int *)calloc(20, sizeof(int));
+
+  cout << "Setting values for test 1" << endl;
+  for (int i = 0; i < 20; i++)
+  {
+    bonds[i] = (double *)calloc(20, sizeof(double));
+    for (int j = 0; j < 20; j++)
+    {
+      if (j == k)
+      {
+        bonds[i][j] = 1.0;
+        k--;
+      }
+      else
+      {
+        bonds[i][j] = 0.0;
+      }
+      cout << bonds[i][j] << " ";
+    }
+    cout << endl;
+  }
+
+  cout << "Starting calculating test 1" << endl;
+  double result = CalculateHighestProduct(bonds, 0, takenMissions) * 100;
+
+  printf("First result: %lf\n", result);
+
+  for (int i = 0; i < 20; i++)
+  {
+    free(bonds[i]);
+  }
+  free(bonds);
+  free(takenMissions);
+
+  return(result == 100);
+}
+
+bool TestTwo()
+{
+  bondCount = 3;
+  double **bonds = (double **)calloc(bondCount, sizeof(double *));
+  int *    takenMissions = (int *)calloc(bondCount, sizeof(int));
+
+  for (int i = 0; i < bondCount; i++)
+  {
+    bonds[i] = (double *)calloc(bondCount, sizeof(double));
+  }
+  bonds[0][0] = 0.25;
+  bonds[0][1] = 0.6;
+  bonds[0][2] = 1.0;
+  bonds[1][0] = 0.13;
+  bonds[1][1] = 0.0;
+  bonds[1][2] = 0.50;
+  bonds[2][0] = 0.12;
+  bonds[2][1] = 0.70;
+  bonds[2][2] = 0.90;
+
+  cout << "Test two values" << endl;
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      cout << bonds[i][j] << " ";
+    }
+    cout << endl;
+  }
+
+  double result = CalculateHighestProduct(bonds, 0, takenMissions) * 100;
+
+  for (int i = 0; i < 3; i++)
+  {
+    free(bonds[i]);
+  }
+  free(bonds);
+  free(takenMissions);
+
+  return(result == 9.1);
+}
+
+bool TestThree()
+{
+  return(true);
+}
+
+double CalculateHighestProduct(double **bonds, int bondIndex, int *takenMissions)
+{
+  double product = 0, max = 0;
 
   // If the last bond, get the remaining probability
-  if (bondIndex == bondCount - 1)
+  if (bondIndex + 1 == bondCount)
   {
     for (int i = 0; i < bondCount; i++)
     {
       if (!CheckIfTaken(i, takenMissions, bondIndex))
       {
-        int ret = bonds[bondIndex][i];
+        double ret = bonds[bondIndex][i];
+        cout << "Finishing bond probability : " << ret << endl;
         return(ret);
       }
     }
@@ -85,17 +203,15 @@ int CalculateHighestProduct(int **bonds, int bondIndex, int bondCount, int *take
   {
     if (!CheckIfTaken(i, takenMissions, bondIndex))
     {
-      if (bonds[bondIndex][i] != 0)
+      takenMissions[bondIndex] = i;
+      product = bonds[bondIndex][i] * CalculateHighestProduct(bonds, bondIndex + 1, takenMissions);
+      if (product > max)
       {
-        takenMissions[bondIndex] = i;
-        product = bonds[bondIndex][i] * CalculateHighestProduct(bonds, bondIndex + 1, bondCount, takenMissions);
-        if (product > max)
-        {
-          max = product;
-        }
+        max = product;
       }
     }
   }
+  cout << "Bond number: " << bondIndex + 1 << " probability: " << max << endl;
   return(max);
 }
 
